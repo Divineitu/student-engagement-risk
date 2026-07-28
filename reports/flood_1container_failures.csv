@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences
+POST,/predict,HTTPError('504 Server Error: Gateway Time-out for url: /predict'),3
