@@ -19,7 +19,7 @@ import tensorflow as tf
 from sklearn.metrics import f1_score
 
 from src import database
-from src.preprocessing import CLASS_NAMES, build_pipeline, list_files_labels, make_dataset_from_files
+from src.preprocessing import CLASS_NAMES, list_files_labels, make_dataset_from_files
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..")
 MODEL_PATH = os.path.join(BASE_DIR, "models", "engagement_model.keras")
@@ -31,11 +31,17 @@ RESAMPLE_PER_RETRAIN = 500
 FINE_TUNE_EPOCHS = 3
 FINE_TUNE_LR = 1e-5
 
+# retrain runs on a free-tier CPU behind a request timeout, and running the
+# full ~3600 image test set through the model twice (before + after) is way
+# too slow for that - subsample instead, same subsample for both passes so
+# the before/after comparison is still apples to apples
+EVAL_SAMPLE_SIZE = 500
 
-def _macro_f1_on_test(model):
-    test_ds = build_pipeline(TEST_DIR, batch_size=64, shuffle=False)
+
+def _macro_f1_on_test(model, eval_files, eval_labels):
+    eval_ds = make_dataset_from_files(eval_files, eval_labels, batch_size=64, shuffle=False)
     y_true, y_pred = [], []
-    for x, y in test_ds:
+    for x, y in eval_ds:
         probs = model.predict(x, verbose=0)
         y_pred.extend(probs.argmax(axis=1))
         y_true.extend(y.numpy())
@@ -65,7 +71,13 @@ def run_retrain():
         return {"status": "no_new_data"}
 
     model = tf.keras.models.load_model(MODEL_PATH)
-    old_f1 = _macro_f1_on_test(model)
+
+    test_files, test_labels = list_files_labels(TEST_DIR)
+    eval_idx = random.sample(range(len(test_files)), min(EVAL_SAMPLE_SIZE, len(test_files)))
+    eval_files = [test_files[i] for i in eval_idx]
+    eval_labels = [test_labels[i] for i in eval_idx]
+
+    old_f1 = _macro_f1_on_test(model, eval_files, eval_labels)
 
     train_files, train_labels = list_files_labels(TRAIN_DIR)
     sample_idx = random.sample(range(len(train_files)), min(RESAMPLE_PER_RETRAIN, len(train_files)))
@@ -77,7 +89,7 @@ def run_retrain():
     model.optimizer.learning_rate.assign(FINE_TUNE_LR)
     model.fit(fine_tune_ds, epochs=FINE_TUNE_EPOCHS, verbose=0)
 
-    new_f1 = _macro_f1_on_test(model)
+    new_f1 = _macro_f1_on_test(model, eval_files, eval_labels)
 
     version = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     versioned_path = os.path.join(BASE_DIR, "models", f"engagement_model_{version}.keras")
