@@ -17,6 +17,10 @@ triggering retraining from the UI.
 Both run on Render's free tier, which spins a service down after 15 min of no traffic - the
 first request after a while can take 30-60s while it wakes back up. That's expected, not a bug.
 
+The free tier's 512MB memory limit is also tight enough that either service can get killed and
+auto-restarted by Render under memory pressure (shows up as a 502 for a few seconds). Render
+brings it back up on its own within about a minute - if you hit this, just refresh.
+
 ## Why this project
 
 This is a follow-up to my earlier Introduction to ML summative, which was a tabular

@@ -9,6 +9,15 @@ from PIL import Image
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+# render's free tier only gives this 512MB - TF's default thread pools and
+# oneDNN kernels each grab their own scratch buffers, which is what was
+# tipping this over into OOM segfaults. capping threads to 1 costs a little
+# inference speed but keeps memory way more predictable
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("TF_NUM_INTRAOP_THREADS", "1")
+os.environ.setdefault("TF_NUM_INTEROP_THREADS", "1")
+
 from src import database, prediction, retrain
 from src.preprocessing import CLASS_NAMES
 
