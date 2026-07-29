@@ -4,7 +4,7 @@ MLOps summative - end to end ML pipeline, deployed and load tested.
 
 ## Video demo
 
-[YouTube link - TODO]
+https://youtu.be/Gn-4K1oq8xg
 
 Shows: a prediction on a single uploaded face image, a bulk upload of new images, and
 triggering retraining from the UI.
@@ -64,7 +64,7 @@ student-engagement-risk/
 ### 1. Clone and install
 
 ```
-git clone [repo url]
+git clone https://github.com/Divineitu/student-engagement-risk.git
 cd student-engagement-risk
 python -m venv .venv
 .venv/Scripts/activate        # source .venv/bin/activate on mac/linux
