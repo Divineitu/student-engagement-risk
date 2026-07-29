@@ -11,8 +11,11 @@ triggering retraining from the UI.
 
 ## Live app
 
-- UI: `[Render URL - TODO]`
-- API docs (swagger): `[Render URL - TODO]/docs`
+- UI: https://student-engagement-risk-ui.onrender.com
+- API docs (swagger): https://student-engagement-risk-api.onrender.com/docs
+
+Both run on Render's free tier, which spins a service down after 15 min of no traffic - the
+first request after a while can take 30-60s while it wakes back up. That's expected, not a bug.
 
 ## Why this project
 
@@ -154,11 +157,17 @@ See `reports/flood_test_results.md` for the full writeup and chart.
 ## Deployment (Render)
 
 1. Push this repo to GitHub.
-2. Create a new Render Web Service from the repo, Docker runtime, Dockerfile path
-   `Dockerfile.api`, and a second Web Service for `Dockerfile.ui` with an `API_URL`
-   environment variable pointing at the first service's Render URL.
-3. Both services need at least a "Starter" instance (TensorFlow's memory footprint doesn't
-   fit the free tier).
+2. Create a Render Web Service from the repo: Docker runtime, Dockerfile path `Dockerfile.api`,
+   start command `uvicorn api.main:app --host 0.0.0.0 --port 8000`, instance type Free.
+3. Create a second Web Service from the same repo: Docker runtime, Dockerfile path
+   `Dockerfile.ui`, start command `streamlit run ui/app.py --server.address=0.0.0.0
+   --server.port=8501`, instance type Free, with an `API_URL` environment variable pointing at
+   the first service's Render URL.
+
+Both fit fine on Render's free tier (`tensorflow-cpu` keeps the API's memory footprint under
+the 512MB cap). The docker-compose/nginx setup earlier in this README is only for the local
+flood test, scaling to multiple API containers behind a load balancer - Render runs each
+Dockerfile as its own single service and handles routing itself, no nginx involved.
 
 ## Model evaluation summary
 
