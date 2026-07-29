@@ -27,7 +27,7 @@ with tab_predict:
         if col2.button("Predict"):
             files = {"file": (uploaded.name, uploaded.getvalue())}
             try:
-                r = requests.post(f"{API_URL}/predict", files=files, timeout=30)
+                r = requests.post(f"{API_URL}/predict", files=files, timeout=60)
                 r.raise_for_status()
                 result = r.json()
                 col2.success(f"Predicted: **{result['label']}** ({result['confidence'] * 100:.1f}% confidence)")
@@ -41,7 +41,7 @@ with tab_predict:
 with tab_viz:
     st.subheader("Dataset insights")
     try:
-        stats = requests.get(f"{API_URL}/stats", timeout=10).json()
+        stats = requests.get(f"{API_URL}/stats", timeout=60).json()
         counts_df = pd.DataFrame(
             list(stats["train_counts"].items()), columns=["class", "count"]
         ).sort_values("count", ascending=False)
@@ -111,7 +111,7 @@ with tab_upload:
 with tab_status:
     st.subheader("Service status")
     try:
-        health = requests.get(f"{API_URL}/health", timeout=10).json()
+        health = requests.get(f"{API_URL}/health", timeout=60).json()
         col1, col2 = st.columns(2)
         col1.metric("uptime (s)", health["uptime_seconds"])
         last_retrain = health["last_retrain"]
@@ -124,7 +124,7 @@ with tab_status:
         st.error(f"API unreachable: {e}")
 
     try:
-        stats = requests.get(f"{API_URL}/stats", timeout=10).json()
+        stats = requests.get(f"{API_URL}/stats", timeout=60).json()
         recent = pd.DataFrame(stats["recent_requests"])
         if not recent.empty:
             recent["time"] = pd.to_datetime(recent["ts"], unit="s")
